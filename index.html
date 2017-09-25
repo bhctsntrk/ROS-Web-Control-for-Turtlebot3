@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="./css/style.css">
+
+<canvas id="myCanvas" width=300 height=300></canvas>
+
+<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+
+<script type="text/javascript" type="text/javascript">
+
+// This function connects to the rosbridge server running on the local computer on port 9090
+var rbServer = new ROSLIB.Ros({
+    url : 'ws://192.168.1.102:9090'
+ });
+
+ // This function is called upon the rosbridge connection event
+ rbServer.on('connection', function() {
+     // Write appropriate message to #feedback div when successfully connected to rosbridge
+     var fbDiv = document.getElementById('feedback');
+     fbDiv.innerHTML += "<p>Connected to Robot Operation System Server</p>";
+ });
+
+// This function is called when there is an error attempting to connect to rosbridge
+rbServer.on('error', function(error) {
+    // Write appropriate message to #feedback div upon error when attempting to connect to rosbridge
+    var fbDiv = document.getElementById('feedback');
+    fbDiv.innerHTML += "<p>Error connecting to websocket server</p>";
+});
+
+// This function is called when the connection to rosbridge is closed
+rbServer.on('close', function() {
+    // Write appropriate message to #feedback div upon closing connection to rosbridge
+    var fbDiv = document.getElementById('feedback');
+    fbDiv.innerHTML += "<p>Connection to websocket server closed</p>";
+ });
+
+// These lines create a topic object as defined by roslibjs
+var cmdVelTopic = new ROSLIB.Topic({
+    ros : rbServer,
+    name : '/turtle1/cmd_vel',
+    messageType : 'geometry_msgs/Twist'
+});
+
+// These lines create a message that conforms to the structure of the Twist defined in our ROS installation
+// It initalizes all properties to zero. They will be set to appropriate values before we publish this message.
+var twist = new ROSLIB.Message({
+    linear : {
+        x : 0.0,
+        y : 0.0,
+        z : 0.0
+    },
+    angular : {
+        x : 0.0,
+        y : 0.0,
+        z : 0.0
+    }
+});
+
+var poseTopic = new ROSLIB.Topic({
+    ros : rbServer,
+    name : '/turtle1/pose',
+    messageType : 'turtlesim/Pose'
+});
+/*
+var pose = new ROSLIB.Message({
+    x : 0.0,
+    y : 0.0,
+    theta : 0.0,
+    linear_velocity : 0.0,
+    angular_velocity : 0.0
+});
+*/
+
+var globPoseX;
+var globPoseY;
+var globTheta;
+
+function sleep(delay) {
+    var start = new Date().getTime();
+    while (new Date().getTime() < start + delay);
+}
+
+function map(x, in_min, in_max, out_min, out_max) {
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+function find_target_direction(tarX, tarY) {
+    norm_x = tarX - globPoseX
+    norm_y = tarY - globPoseY
+    
+    target_direction = Math.atan2(norm_y, norm_x)
+    return target_direction;
+}
+
+function goToPoint(tarX, tarY) {
+    var target_direction = find_target_direction(tarX, tarY);
+    
+    twist.linear.x = 0.0;
+    twist.angular.z = -globTheta + target_direction;
+    cmdVelTopic.publish(twist);
+    sleep(200)
+
+    twist.linear.x = 0.0;
+    twist.angular.z = 0.0;
+    cmdVelTopic.publish(twist);    
+    
+    twist.linear.x = 1.0;
+    twist.angular.z = 0.0;
+    cmdVelTopic.publish(twist);
+    sleep(200)
+    
+    
+    twist.linear.x = 0.0;
+    twist.angular.z = 0.0;
+    cmdVelTopic.publish(twist);     
+}
+
+var elem = document.getElementById('myCanvas'),
+    elemLeft = elem.offsetLeft,
+    elemTop = elem.offsetTop,
+    context = elem.getContext('2d');
+
+// This block click event block in canvas
+elem.addEventListener('click', function(event) {
+    var mouseX = event.pageX - elemLeft;
+    var mouseY = 300 - event.pageY + elemTop;
+    mouseX = map(mouseX, 0, 300, 0, 11.08)
+    mouseY = map(mouseY, 0, 300, 0, 11.08)
+    var mouseClick1 = document.getElementById('mouseClick');
+    mouseClick1.innerHTML  = mouseX + "," + mouseY
+
+    goToPoint(mouseX, mouseY)
+    
+}, false);
+
+//this block subscriber block
+poseTopic.subscribe(function(message) {
+    globPoseX = message.x
+    globPoseY = message.y
+    globTheta = message.theta
+    var poseX = document.getElementById('poseX');
+    poseX.innerHTML  = "X = " + message.x
+    var poseY = document.getElementById('poseY');
+    poseY.innerHTML  = "Y = " + message.y
+    var poseTheta = document.getElementById('poseTheta');
+    poseTheta.innerHTML  = "Theta = " + message.theta
+    var poseLinVel = document.getElementById('poseLinVel');
+    poseLinVel.innerHTML  = "LinVel = " + message.linear_velocity
+    var poseAngVel = document.getElementById('poseAngVel');
+    poseAngVel.innerHTML  = "AngVel = " + message.angular_velocity
+    
+    //this block draw black line
+    var drawX = message.x*300/11.08
+    var drawY = 300 - message.y*300/11.08
+    context.fillStyle = "#09ff00";
+    context.moveTo(drawX,drawY);
+    context.lineTo(drawX+1,drawY+1);
+    context.stroke();
+    //this block drav triangle
+});
+
+function goforward() {
+    var linearX = 1.0;
+    var angularZ = 0.0;
+
+    twist.linear.x = linearX;
+    twist.angular.z = angularZ;
+
+    cmdVelTopic.publish(twist);
+}
+function gobackward() {
+    var linearX = -1.0;
+    var angularZ = 0.0;
+
+    twist.linear.x = linearX;
+    twist.angular.z = angularZ;
+
+    cmdVelTopic.publish(twist);
+}
+function turnright() {
+    var linearX = 0.0;
+    var angularZ = -1.0;
+
+    twist.linear.x = linearX;
+    twist.angular.z = angularZ;
+
+    cmdVelTopic.publish(twist);
+}
+function turnleft() {
+    var linearX = 0.0;
+    var angularZ = 1.0;
+
+    twist.linear.x = linearX;
+    twist.angular.z = angularZ;
+
+    cmdVelTopic.publish(twist);
+}
+</script>
+
+</head>
+<body>
+<div class="KezbotOpenMessage">
+<b>Ankara University Kezbot Version 2.0.0 Command Control Center</b>
+</div>
+<form id="c2356" >
+<div class="ButtonForm">
+<button class="UpButton" type="button" ="Up" onclick="goforward()">Up</button>
+<button class="DownButton" type="button" ="Up" onclick="gobackward()">Down</button>
+<button class="LeftButton" type="button" ="Up" onclick="turnleft()">Left</button>
+<button class="RightButton" type="button" ="Up" onclick="turnright()">Right</button>
+</div>
+</form>
+<div class="PoseX" id="poseX"></div>
+<div class="PoseY" id="poseY"></div>
+<div class="PoseLinVel" id="poseLinVel"></div>
+<div class="PoseTheta" id="poseTheta"></div>
+<div class="feedbackText" id="feedback"></div>
+<div class="PoseAngVel" id="poseAngVel"></div>
+<div class="MouseClick" id="mouseClick">deneme</div>
+</body>
+<html>

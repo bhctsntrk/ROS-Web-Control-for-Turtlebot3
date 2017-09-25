@@ -1,0 +1,148 @@
+*{
+  box-sizing: border-box;
+}
+body{
+  margin:0;
+  background-color:#000000;
+}
+.LeftButton{
+  position:absolute;
+  top:19px;
+  right:84px;
+  width:50px;
+  height:111px;
+  display:block;
+  bottom:0px;
+  left:0px;
+  color:#09ff00;
+  font-family:Courier New, Courier, monospace;
+  background-color:#000000;
+  border:5px groove #11da00;
+  font-weight:900;
+}
+.DownButton{
+  float:none;
+  position:absolute;
+  top:73px;
+  bottom:0px;
+  left:52px;
+  right:0px;
+  width:62px;
+  height:56px;
+  font-family:Courier New, Courier, monospace;
+  color:#09ff00;
+  background-color:#000000;
+  border:5px groove #11da00;
+  font-weight:900;
+}
+.UpButton{
+  flex-direction:row;
+  justify-content:flex-start;
+  align-items:center;
+  align-self:auto;
+  left:52px;
+  right:0px;
+  position:absolute;
+  width:62px;
+  height:52px;
+  top:21px;
+  color:#09ff00;
+  font-family:Courier New, Courier, monospace;
+  background-color:#000000;
+  border:5px groove #11da00;
+  line-height:0px;
+  font-weight:900;
+}
+.ButtonForm{
+  position:static;
+}
+.RightButton{
+  left:116px;
+  right:0px;
+  position:absolute;
+  top:20px;
+  width:49px;
+  height:109px;
+  color:#09ff00;
+  font-family:Courier New, Courier, monospace;
+  text-align:left;
+  opacity:1;
+  background-color:#000000;
+  border:5px groove #11da00;
+  font-weight:900;
+  letter-spacing:-1px;
+  text-decoration:none;
+  font-size:12px;
+}
+.KezbotOpenMessage{
+  font-family:Courier New, Courier, monospace;
+  color:#09ff00;
+  position:absolute;
+  float:none;
+  top:2px;
+}
+.feedbackText{
+  position:absolute;
+  top:137px;
+  font-weight:900;
+  color:#09ff00;
+  font-family:Courier New, Courier, monospace;
+}
+.c2508{
+  position:static;
+}
+.PoseY{
+  position:absolute;
+  left:171px;
+  top:46px;
+  color:#09ff00;
+  font-family:Courier New, Courier, monospace;
+  font-weight:900;
+}
+.PoseX{
+  position:absolute;
+  left:171px;
+  top:26px;
+  color:#09ff00;
+  font-weight:900;
+  font-family:Courier New, Courier, monospace;
+}
+.PoseTheta{
+  position:absolute;
+  top:66px;
+  left:171px;
+  color:#09ff00;
+  font-family:Courier New, Courier, monospace;
+  font-weight:900;
+}
+.PoseLinVel{
+  position:absolute;
+  top:85px;
+  left:171px;
+  color:#09ff00;
+  font-family:Courier New, Courier, monospace;
+  font-weight:900;
+}
+.PoseAngVel{
+  position:absolute;
+  top:105px;
+  left:171px;
+  font-family:Courier New, Courier, monospace;
+  font-weight:900;
+  color:#09ff00;
+}
+.MouseClick{
+  position:absolute;
+  left:310px;
+  top:170px;
+  color:#09ff00;
+  font-weight:900;
+  font-family:Courier New, Courier, monospace;
+}
+Canvas {
+  position:absolute;
+  background-color:#09ff00;
+  top:170px;
+  left:1px;
+  border:1px solid #11da00;
+}
