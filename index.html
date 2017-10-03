@@ -13,7 +13,7 @@
 
 // This function connects to the rosbridge server running on the local computer on port 9090
 var rbServer = new ROSLIB.Ros({
-    url : 'ws://192.168.1.102:9090'
+    url : 'ws://localhost:9090'
  });
 
  // This function is called upon the rosbridge connection event
@@ -40,7 +40,7 @@ rbServer.on('close', function() {
 // These lines create a topic object as defined by roslibjs
 var cmdVelTopic = new ROSLIB.Topic({
     ros : rbServer,
-    name : '/turtle1/cmd_vel',
+    name : '/cmd_vel',
     messageType : 'geometry_msgs/Twist'
 });
 
@@ -59,24 +59,36 @@ var twist = new ROSLIB.Message({
     }
 });
 
+var odomTopic = new ROSLIB.Topic({
+    ros : rbServer,
+    name : '/odom',
+    messageType : 'nav_msgs/Odometry'
+});
+
+odomTopic.subscribe(function(message) {
+    var poseLinVel = document.getElementById('poseLinVel');
+    poseLinVel.innerHTML  = "LinVel = " + message.twist.twist.linear.x
+    var poseAngVel = document.getElementById('poseAngVel');
+    poseAngVel.innerHTML  = "AngVel = " + message.twist.twist.angular.z
+});
+
 var poseTopic = new ROSLIB.Topic({
     ros : rbServer,
-    name : '/turtle1/pose',
-    messageType : 'turtlesim/Pose'
+    name : '/pose2d',
+    messageType : 'geometry_msgs/Pose2D'
 });
-/*
-var pose = new ROSLIB.Message({
+
+var targetTopic = new ROSLIB.Topic({
+    ros : rbServer,
+    name : '/target',
+    messageType : 'geometry_msgs/Pose2D'
+});
+
+var pose2D = new ROSLIB.Message({
     x : 0.0,
     y : 0.0,
-    theta : 0.0,
-    linear_velocity : 0.0,
-    angular_velocity : 0.0
+    theta : 0.0
 });
-*/
-
-var globPoseX;
-var globPoseY;
-var globTheta;
 
 function sleep(delay) {
     var start = new Date().getTime();
@@ -87,37 +99,20 @@ function map(x, in_min, in_max, out_min, out_max) {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-function find_target_direction(tarX, tarY) {
-    norm_x = tarX - globPoseX
-    norm_y = tarY - globPoseY
+function moveSomeWhere(linVel, angVel) {
+    twist.linear.x = linVel;
+    twist.angular.z = angVel;
     
-    target_direction = Math.atan2(norm_y, norm_x)
-    return target_direction;
+    cmdVelTopic.publish(twist);
 }
-
+//This block go to target
 function goToPoint(tarX, tarY) {
-    var target_direction = find_target_direction(tarX, tarY);
+    pose2D.x = tarX;
+    pose2D.y = tarY;
     
-    twist.linear.x = 0.0;
-    twist.angular.z = -globTheta + target_direction;
-    cmdVelTopic.publish(twist);
-    sleep(200)
-
-    twist.linear.x = 0.0;
-    twist.angular.z = 0.0;
-    cmdVelTopic.publish(twist);    
-    
-    twist.linear.x = 1.0;
-    twist.angular.z = 0.0;
-    cmdVelTopic.publish(twist);
-    sleep(200)
-    
-    
-    twist.linear.x = 0.0;
-    twist.angular.z = 0.0;
-    cmdVelTopic.publish(twist);     
+    targetTopic.publish(pose2D);
 }
-
+//This block is definition of canvas
 var elem = document.getElementById('myCanvas'),
     elemLeft = elem.offsetLeft,
     elemTop = elem.offsetTop,
@@ -125,10 +120,10 @@ var elem = document.getElementById('myCanvas'),
 
 // This block click event block in canvas
 elem.addEventListener('click', function(event) {
-    var mouseX = event.pageX - elemLeft;
-    var mouseY = 300 - event.pageY + elemTop;
-    mouseX = map(mouseX, 0, 300, 0, 11.08)
-    mouseY = map(mouseY, 0, 300, 0, 11.08)
+    var mouseX = 150 - event.pageX - elemLeft;
+    var mouseY = 150 - event.pageY + elemTop;
+    mouseX = map(mouseX, 0, 300, 0, 10)
+    mouseY = map(mouseY, 0, 300, 0, 10)
     var mouseClick1 = document.getElementById('mouseClick');
     mouseClick1.innerHTML  = mouseX + "," + mouseY
 
@@ -138,65 +133,45 @@ elem.addEventListener('click', function(event) {
 
 //this block subscriber block
 poseTopic.subscribe(function(message) {
-    globPoseX = message.x
-    globPoseY = message.y
-    globTheta = message.theta
+    var my_PoseX = message.x
+    var my_PoseY = message.y
+    var my_Theta = message.theta
     var poseX = document.getElementById('poseX');
-    poseX.innerHTML  = "X = " + message.x
+    poseX.innerHTML  = "X = " + my_PoseX
     var poseY = document.getElementById('poseY');
-    poseY.innerHTML  = "Y = " + message.y
+    poseY.innerHTML  = "Y = " + my_PoseY
     var poseTheta = document.getElementById('poseTheta');
-    poseTheta.innerHTML  = "Theta = " + message.theta
-    var poseLinVel = document.getElementById('poseLinVel');
-    poseLinVel.innerHTML  = "LinVel = " + message.linear_velocity
-    var poseAngVel = document.getElementById('poseAngVel');
-    poseAngVel.innerHTML  = "AngVel = " + message.angular_velocity
+    poseTheta.innerHTML  = "Theta = " + my_Theta
     
     //this block draw black line
-    var drawX = message.x*300/11.08
-    var drawY = 300 - message.y*300/11.08
+    var drawX = 150 - message.x*300/10 
+    var drawY = 150 - message.y*300/10 
     context.fillStyle = "#09ff00";
     context.moveTo(drawX,drawY);
     context.lineTo(drawX+1,drawY+1);
     context.stroke();
     //this block drav triangle
 });
-
+//This functions are basic cmd_vel_control blocks
 function goforward() {
-    var linearX = 1.0;
-    var angularZ = 0.0;
-
-    twist.linear.x = linearX;
-    twist.angular.z = angularZ;
-
-    cmdVelTopic.publish(twist);
+    moveSomeWhere(0.5, 0)
+    sleep(100)
+    moveSomeWhere(0, 0)
 }
 function gobackward() {
-    var linearX = -1.0;
-    var angularZ = 0.0;
-
-    twist.linear.x = linearX;
-    twist.angular.z = angularZ;
-
-    cmdVelTopic.publish(twist);
+    moveSomeWhere(-0.5, 0)
+    sleep(100)
+    moveSomeWhere(0, 0)
 }
 function turnright() {
-    var linearX = 0.0;
-    var angularZ = -1.0;
-
-    twist.linear.x = linearX;
-    twist.angular.z = angularZ;
-
-    cmdVelTopic.publish(twist);
+    moveSomeWhere(0, -0.5)
+    sleep(100)
+    moveSomeWhere(0, 0)
 }
 function turnleft() {
-    var linearX = 0.0;
-    var angularZ = 1.0;
-
-    twist.linear.x = linearX;
-    twist.angular.z = angularZ;
-
-    cmdVelTopic.publish(twist);
+    moveSomeWhere(0, 0.5)
+    sleep(100)
+    moveSomeWhere(0, 0)
 }
 </script>
 
