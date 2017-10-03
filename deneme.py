@@ -52,7 +52,8 @@ class RobotManager:
             msg.theta
         )
         
-        self.GoToPointLine()
+        #self.GoToPointLine()
+        self.GoToPointCurve()
         
     def movement(self, ang_z, lin_x):   
         movement_msg = Twist()
@@ -64,6 +65,10 @@ class RobotManager:
 
     def breakes(self):
         self.movement(0, 0) #break
+
+    def find_distance(self):
+        #sqrt(sqr(x1-x2) + sqr(y1-y2))
+        return math.sqrt((self.position[0] - self.target[0])**2 + (self.position[1] - self.target[1])**2)
 
     def am_I_close(self, radius):
         #(x-a)^2+(y-b)^2 = radius^2
@@ -82,9 +87,9 @@ class RobotManager:
             time.sleep(0.1)
             return False
 
-    def find_target_direction(self, my_x, my_y):
-        norm_x =  self.target[0] - my_x
-        norm_y = self.target[1] - my_y
+    def find_target_direction(self):
+        norm_x =  self.target[0] - self.position[0]
+        norm_y = self.target[1] - self.position[1]
         
         target_direction = math.atan2(norm_y, norm_x)
         
@@ -96,7 +101,7 @@ class RobotManager:
         
         t_x = self.target[0]
         t_y = self.target[1]
-        target_direction = self.find_target_direction(my_x, my_y)
+        target_direction = self.find_target_direction()
         
         while math.fabs(self.position[2] - target_direction) > 0.1:
             time.sleep(0.1)
@@ -104,6 +109,28 @@ class RobotManager:
         self.breakes()
         while not(self.am_I_close(0.3)):
             self.movement(0, 0.1)
+        self.breakes()
+    
+    def GoToPointCurve(self):
+        my_x = self.position[0]
+        my_y = self.position[1]
+        
+        t_x = self.target[0]
+        t_y = self.target[1]
+        target_direction = self.find_target_direction()
+        
+        while not(self.am_I_close(0.3)):
+            k_for_velLin = self.find_distance()
+            k_for_velAng = self.find_distance()
+            target_direction = self.find_target_direction()
+            if not(target_direction < 3.14/2) and (target_direction > -3.14/2):
+                k_for_velAng = -k_for_velAng                
+            print("t_d = %s" % target_direction)
+            print("lin = %s" % k_for_velLin)
+            print("ang = %s" % k_for_velAng)
+            self.movement(0, 0.3*k_for_velLin)
+            if math.fabs(self.position[2] - target_direction) > 0.1:
+                self.movement(math.radians(5)*k_for_velAng, 0.1*k_for_velLin)   
         self.breakes()
 
 def main():
