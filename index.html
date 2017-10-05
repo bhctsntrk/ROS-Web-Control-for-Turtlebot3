@@ -120,10 +120,10 @@ var elem = document.getElementById('myCanvas'),
 
 // This block click event block in canvas
 elem.addEventListener('click', function(event) {
-    var mouseX = 150 - event.pageX - elemLeft;
-    var mouseY = 150 - event.pageY + elemTop;
-    mouseX = map(mouseX, 0, 300, 0, 10)
-    mouseY = map(mouseY, 0, 300, 0, 10)
+    var mouseX = -300/2 + event.pageX - elemLeft;
+    var mouseY = 300/2 - event.pageY + elemTop;
+    mouseX = map(mouseX, 0, 300, 0, 30)
+    mouseY = map(mouseY, 0, 300, 0, 30)
     var mouseClick1 = document.getElementById('mouseClick');
     mouseClick1.innerHTML  = mouseX + "," + mouseY
 
@@ -144,8 +144,8 @@ poseTopic.subscribe(function(message) {
     poseTheta.innerHTML  = "Theta = " + my_Theta
     
     //this block draw black line
-    var drawX = 150 - message.x*300/10 
-    var drawY = 150 - message.y*300/10 
+    var drawX = 300/2 + message.x*300/30 
+    var drawY = 300/2 - message.y*300/30 
     context.fillStyle = "#09ff00";
     context.moveTo(drawX,drawY);
     context.lineTo(drawX+1,drawY+1);

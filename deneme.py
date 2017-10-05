@@ -123,13 +123,13 @@ class RobotManager:
             k_for_velLin = self.find_distance()
             k_for_velAng = self.find_distance()
             target_direction = self.find_target_direction()
-            if not(target_direction < 3.14/2) and (target_direction > -3.14/2):
+            if (target_direction < 3.14/2) and (target_direction > -3.14/2) or (self.position[0] < 0):
                 k_for_velAng = -k_for_velAng                
             print("t_d = %s" % target_direction)
             print("lin = %s" % k_for_velLin)
             print("ang = %s" % k_for_velAng)
-            self.movement(0, 0.3*k_for_velLin)
-            if math.fabs(self.position[2] - target_direction) > 0.1:
+            self.movement(0, 0.1*k_for_velLin)
+            if math.fabs(self.position[2] - target_direction) > 0.3:
                 self.movement(math.radians(5)*k_for_velAng, 0.1*k_for_velLin)   
         self.breakes()
 
