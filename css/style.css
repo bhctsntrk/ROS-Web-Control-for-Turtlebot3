@@ -133,16 +133,45 @@ body{
 }
 .MouseClick{
   position:absolute;
-  left:310px;
-  top:170px;
+  left:1px;
+  top:180px;
   color:#09ff00;
   font-weight:900;
   font-family:Courier New, Courier, monospace;
 }
-Canvas {
+.CamWritings{
+  position:absolute;
+  left:310px;
+  top:180px;
+  color:#09ff00;
+  font-weight:900;
+  font-family:Courier New, Courier, monospace;
+}
+.MapWritings{
+  position:absolute;
+  left:620px;
+  top:180px;
+  color:#09ff00;
+  font-weight:900;
+  font-family:Courier New, Courier, monospace;
+}
+.grnCanvas {
   position:absolute;
   background-color:#09ff00;
-  top:170px;
+  top:200px;
   left:1px;
   border:1px solid #11da00;
 }
+.camCanvas {
+  position:absolute;
+  background-color:#09ff00;
+  top:200px;
+  left:310px;
+}
+.mapCanvas {
+  position:absolute;
+  background-color:#09ff00;
+  top:200px;
+  left:620px;
+}
+

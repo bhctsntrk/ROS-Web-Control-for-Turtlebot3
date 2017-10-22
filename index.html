@@ -4,10 +4,13 @@
 <meta charset="utf-8">
 <link rel="stylesheet" href="./css/style.css">
 
-<canvas id="myCanvas" width=300 height=300></canvas>
+<canvas class ="grnCanvas" id="greenCanvas" width=300 height=300></canvas>
 
 <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
 <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/EaselJS/current/easeljs.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
+<script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
 
 <script type="text/javascript" type="text/javascript">
 
@@ -36,6 +39,40 @@ rbServer.on('close', function() {
     var fbDiv = document.getElementById('feedback');
     fbDiv.innerHTML += "<p>Connection to websocket server closed</p>";
  });
+
+/**
+* Setup all visualization elements when the page is loaded.
+*/
+function map_init() {
+	// Create the main viewer.
+	var map_viewer = new ROS2D.Viewer({
+		divID : 'map',
+		width : 300,
+		height : 300
+	});
+
+	// Setup the map client.
+	var gridClient = new ROS2D.OccupancyGridClient({
+		ros : rbServer,
+		rootObject : map_viewer.scene
+	});
+	// Scale the canvas to fit to the map
+	gridClient.on('change', function(){
+		map_viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height)
+		map_viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
+	});
+}
+
+function cam_init() {
+// Create the main viewer.
+	var cam_viewer = new MJPEGCANVAS.Viewer({
+		divID : 'mjpeg',
+		host : 'localhost',
+		width : 300,
+		height : 300,
+		topic : '/camera/rgb/image_raw'
+	});
+}
 
 // These lines create a topic object as defined by roslibjs
 var cmdVelTopic = new ROSLIB.Topic({
@@ -113,7 +150,7 @@ function goToPoint(tarX, tarY) {
     targetTopic.publish(pose2D);
 }
 //This block is definition of canvas
-var elem = document.getElementById('myCanvas'),
+var elem = document.getElementById('greenCanvas'),
     elemLeft = elem.offsetLeft,
     elemTop = elem.offsetTop,
     context = elem.getContext('2d');
@@ -122,8 +159,8 @@ var elem = document.getElementById('myCanvas'),
 elem.addEventListener('click', function(event) {
     var mouseX = -300/2 + event.pageX - elemLeft;
     var mouseY = 300/2 - event.pageY + elemTop;
-    mouseX = map(mouseX, 0, 300, 0, 30)
-    mouseY = map(mouseY, 0, 300, 0, 30)
+    mouseX = map(mouseX, 0, 300, 0, 5)
+    mouseY = map(mouseY, 0, 300, 0, 5)
     var mouseClick1 = document.getElementById('mouseClick');
     mouseClick1.innerHTML  = mouseX + "," + mouseY
 
@@ -144,8 +181,8 @@ poseTopic.subscribe(function(message) {
     poseTheta.innerHTML  = "Theta = " + my_Theta
     
     //this block draw black line
-    var drawX = 300/2 + message.x*300/30 
-    var drawY = 300/2 - message.y*300/30 
+    var drawX = 300/2 + message.x*300/5 
+    var drawY = 300/2 - message.y*300/5 
     context.fillStyle = "#09ff00";
     context.moveTo(drawX,drawY);
     context.lineTo(drawX+1,drawY+1);
@@ -176,7 +213,7 @@ function turnleft() {
 </script>
 
 </head>
-<body>
+<body onload="cam_init(); map_init();">
 <div class="KezbotOpenMessage">
 <b>Ankara University Kezbot Version 2.0.0 Command Control Center</b>
 </div>
@@ -194,6 +231,10 @@ function turnleft() {
 <div class="PoseTheta" id="poseTheta"></div>
 <div class="feedbackText" id="feedback"></div>
 <div class="PoseAngVel" id="poseAngVel"></div>
-<div class="MouseClick" id="mouseClick">deneme</div>
+<div class="MouseClick" id="mouseClick">2D Map and Control Window</div>
+<div class="CamWritings" >RGB Camera</div>
+<div class="MapWritings" >360Laser Assisted Gmapping</div>
+<div class="mapCanvas" id="map"></div>
+<div class="camCanvas" id="mjpeg"></div>
 </body>
 <html>
