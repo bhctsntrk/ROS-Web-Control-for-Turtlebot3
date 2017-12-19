@@ -1,240 +1,231 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="./css/style.css">
+    <!HEAD START>
+    <head>
+        <meta charset="utf-8">
 
-<canvas class ="grnCanvas" id="greenCanvas" width=300 height=300></canvas>
+        <!CSS style URL>
+        <link rel="stylesheet" href="./css/style.css">
 
-<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
-<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
-<script type="text/javascript" src="http://cdn.robotwebtools.org/EaselJS/current/easeljs.min.js"></script>
-<script type="text/javascript" src="http://cdn.robotwebtools.org/ros2djs/current/ros2d.min.js"></script>
-<script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
+        <!Js sources URL's START>
+        <script type="text/javascript" src="./rosjsScripts/eventemitter2.min.js"></script>
+        <script type="text/javascript" src="./rosjsScripts/roslib.min.js"></script>
+        <script type="text/javascript" src="./rosjsScripts/easeljs.min.js"></script>
+        <script type="text/javascript" src="./rosjsScripts/ros2d.min.js"></script>
+        <script type="text/javascript" src="./rosjsScripts/mjpegcanvas.min.js"></script>
+        <script type="text/javascript" src="./rosjsScripts/nav2d.js"></script>
+        <!Js sources URL's END>
 
-<script type="text/javascript" type="text/javascript">
+        <!Main script start>
+        <script type="text/javascript" type="text/javascript">
 
-// This function connects to the rosbridge server running on the local computer on port 9090
-var rbServer = new ROSLIB.Ros({
-    url : 'ws://localhost:9090'
- });
+        // This function connects to the rosbridge server running on the local computer on port 9090
+        var rbServer = new ROSLIB.Ros({
+            url : 'ws://localhost:9090'
+        });
 
- // This function is called upon the rosbridge connection event
- rbServer.on('connection', function() {
-     // Write appropriate message to #feedback div when successfully connected to rosbridge
-     var fbDiv = document.getElementById('feedback');
-     fbDiv.innerHTML += "<p>Connected to Robot Operation System Server</p>";
- });
+        // This function is called upon the rosbridge connection event
+        rbServer.on('connection', function() {
+            // Write appropriate message to #feedback div when successfully connected to rosbridge
+            var fbDiv = document.getElementById('feedback');
+            fbDiv.innerHTML = "<p>Connected to Robot Operation System Server</p>";
+        });
 
-// This function is called when there is an error attempting to connect to rosbridge
-rbServer.on('error', function(error) {
-    // Write appropriate message to #feedback div upon error when attempting to connect to rosbridge
-    var fbDiv = document.getElementById('feedback');
-    fbDiv.innerHTML += "<p>Error connecting to websocket server</p>";
-});
+        // This function is called when there is an error attempting to connect to rosbridge
+        rbServer.on('error', function(error) {
+            // Write appropriate message to #feedback div upon error when attempting to connect to rosbridge
+            var fbDiv = document.getElementById('feedback');
+            fbDiv.innerHTML = "<p>Error connecting to websocket server</p>";
+        });
 
-// This function is called when the connection to rosbridge is closed
-rbServer.on('close', function() {
-    // Write appropriate message to #feedback div upon closing connection to rosbridge
-    var fbDiv = document.getElementById('feedback');
-    fbDiv.innerHTML += "<p>Connection to websocket server closed</p>";
- });
+        // This function is called when the connection to rosbridge is closed
+        rbServer.on('close', function() {
+            // Write appropriate message to #feedback div upon closing connection to rosbridge
+            var fbDiv = document.getElementById('feedback');
+            fbDiv.innerHTML = "<p>Connection to websocket server closed</p>";
+        });
 
-/**
-* Setup all visualization elements when the page is loaded.
-*/
-function map_init() {
-	// Create the main viewer.
-	var map_viewer = new ROS2D.Viewer({
-		divID : 'map',
-		width : 300,
-		height : 300
-	});
-
-	// Setup the map client.
-	var gridClient = new ROS2D.OccupancyGridClient({
-		ros : rbServer,
-		rootObject : map_viewer.scene
-	});
-	// Scale the canvas to fit to the map
-	gridClient.on('change', function(){
-		map_viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height)
-		map_viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
-	});
-}
-
-function cam_init() {
-// Create the main viewer.
-	var cam_viewer = new MJPEGCANVAS.Viewer({
-		divID : 'mjpeg',
-		host : 'localhost',
-		width : 300,
-		height : 300,
-		topic : '/camera/rgb/image_raw'
-	});
-}
-
-// These lines create a topic object as defined by roslibjs
-var cmdVelTopic = new ROSLIB.Topic({
-    ros : rbServer,
-    name : '/cmd_vel',
-    messageType : 'geometry_msgs/Twist'
-});
-
-// These lines create a message that conforms to the structure of the Twist defined in our ROS installation
-// It initalizes all properties to zero. They will be set to appropriate values before we publish this message.
-var twist = new ROSLIB.Message({
-    linear : {
-        x : 0.0,
-        y : 0.0,
-        z : 0.0
-    },
-    angular : {
-        x : 0.0,
-        y : 0.0,
-        z : 0.0
-    }
-});
-
-var odomTopic = new ROSLIB.Topic({
-    ros : rbServer,
-    name : '/odom',
-    messageType : 'nav_msgs/Odometry'
-});
-
-odomTopic.subscribe(function(message) {
-    var poseLinVel = document.getElementById('poseLinVel');
-    poseLinVel.innerHTML  = "LinVel = " + message.twist.twist.linear.x
-    var poseAngVel = document.getElementById('poseAngVel');
-    poseAngVel.innerHTML  = "AngVel = " + message.twist.twist.angular.z
-});
-
-var poseTopic = new ROSLIB.Topic({
-    ros : rbServer,
-    name : '/pose2d',
-    messageType : 'geometry_msgs/Pose2D'
-});
-
-var targetTopic = new ROSLIB.Topic({
-    ros : rbServer,
-    name : '/target',
-    messageType : 'geometry_msgs/Pose2D'
-});
-
-var pose2D = new ROSLIB.Message({
-    x : 0.0,
-    y : 0.0,
-    theta : 0.0
-});
-
-function sleep(delay) {
-    var start = new Date().getTime();
-    while (new Date().getTime() < start + delay);
-}
-
-function map(x, in_min, in_max, out_min, out_max) {
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
-function moveSomeWhere(linVel, angVel) {
-    twist.linear.x = linVel;
-    twist.angular.z = angVel;
+        /*
+        Upper section of code necessary for ros bridge web server
+        Lower section for elements in the page 
+        */
     
-    cmdVelTopic.publish(twist);
-}
-//This block go to target
-function goToPoint(tarX, tarY) {
-    pose2D.x = tarX;
-    pose2D.y = tarY;
-    
-    targetTopic.publish(pose2D);
-}
-//This block is definition of canvas
-var elem = document.getElementById('greenCanvas'),
-    elemLeft = elem.offsetLeft,
-    elemTop = elem.offsetTop,
-    context = elem.getContext('2d');
+        //Navigation and Map linses START-------------------
+        var nav_viewer = 0;
+        var nav_client = 0;
+        function nav_and_map_init() {
+            //Create nav2d canvas.
+            nav_viewer = new ROS2D.Viewer({
+                divID : 'nav2dmap',
+                width : 500,
+                height : 500
+            });
 
-// This block click event block in canvas
-elem.addEventListener('click', function(event) {
-    var mouseX = -300/2 + event.pageX - elemLeft;
-    var mouseY = 300/2 - event.pageY + elemTop;
-    mouseX = map(mouseX, 0, 300, 0, 5)
-    mouseY = map(mouseY, 0, 300, 0, 5)
-    var mouseClick1 = document.getElementById('mouseClick');
-    mouseClick1.innerHTML  = mouseX + "," + mouseY
+            // Setup the nav client.
+            nav_client = NAV2D.OccupancyGridClientNav({
+                ros : rbServer,
+                continuous: true,
+                rootObject : nav_viewer.scene,
+                viewer : nav_viewer,
+                serverName : '/move_base',
+                withOrientation : true
+            });
 
-    goToPoint(mouseX, mouseY)
-    
-}, false);
+        }
+        function MapZoomFunc() {
+            nav_viewer.scene.scaleX*=1.25;
+            nav_viewer.scene.scaleY*=1.25;
+        }      
+        function MapPanFunc() {
+            nav_viewer.scene.scaleX*=0.75;
+            nav_viewer.scene.scaleY*=0.75;
+        }          
+        function cancelGoalFunc() {
+            nav_client.navigator.cancelGoal();
+        }
+        //Navigation and Map linses END------------------------
+   
+        // Create mp4 main viewer.
+        function cam_init() {
+	        var cam_viewer = new MJPEGCANVAS.Viewer({
+		        divID : 'mjpeg',
+		        host : 'localhost',
+		        width : 500,
+		        height : 500,
+		        topic : '/camera/rgb/image_raw'
+	        });
+        }
 
-//this block subscriber block
-poseTopic.subscribe(function(message) {
-    var my_PoseX = message.x
-    var my_PoseY = message.y
-    var my_Theta = message.theta
-    var poseX = document.getElementById('poseX');
-    poseX.innerHTML  = "X = " + my_PoseX
-    var poseY = document.getElementById('poseY');
-    poseY.innerHTML  = "Y = " + my_PoseY
-    var poseTheta = document.getElementById('poseTheta');
-    poseTheta.innerHTML  = "Theta = " + my_Theta
-    
-    //this block draw black line
-    var drawX = 300/2 + message.x*300/5 
-    var drawY = 300/2 - message.y*300/5 
-    context.fillStyle = "#09ff00";
-    context.moveTo(drawX,drawY);
-    context.lineTo(drawX+1,drawY+1);
-    context.stroke();
-    //this block drav triangle
-});
-//This functions are basic cmd_vel_control blocks
-function goforward() {
-    moveSomeWhere(0.5, 0)
-    sleep(100)
-    moveSomeWhere(0, 0)
-}
-function gobackward() {
-    moveSomeWhere(-0.5, 0)
-    sleep(100)
-    moveSomeWhere(0, 0)
-}
-function turnright() {
-    moveSomeWhere(0, -0.5)
-    sleep(100)
-    moveSomeWhere(0, 0)
-}
-function turnleft() {
-    moveSomeWhere(0, 0.5)
-    sleep(100)
-    moveSomeWhere(0, 0)
-}
-</script>
+        //This lines subscribe to odom
+        var odomTopic = new ROSLIB.Topic({
+            ros : rbServer,
+            name : '/odom',
+            messageType : 'nav_msgs/Odometry'
+        });
+        //This lines pull data from subscribed topic odom
+        odomTopic.subscribe(function(message) {
+            var poseX = document.getElementById('poseX');
+            poseX.innerHTML  = "X = " + message.pose.pose.position.x
+            var poseY = document.getElementById('poseY');
+            poseY.innerHTML  = "Y = " + message.pose.pose.position.y
+            var poseTheta = document.getElementById('poseTheta');
+            poseTheta.innerHTML  = "Theta = " + message.pose.pose.orientation.w
+            var poseLinVel = document.getElementById('poseLinVel');
+            poseLinVel.innerHTML  = "LinVel = " + message.twist.twist.linear.x
+            var poseAngVel = document.getElementById('poseAngVel');
+            poseAngVel.innerHTML  = "AngVel = " + message.twist.twist.angular.z
+        });
 
-</head>
-<body onload="cam_init(); map_init();">
-<div class="KezbotOpenMessage">
-<b>Ankara University Kezbot Version 2.0.0 Command Control Center</b>
-</div>
-<form id="c2356" >
-<div class="ButtonForm">
-<button class="UpButton" type="button" ="Up" onclick="goforward()">Up</button>
-<button class="DownButton" type="button" ="Up" onclick="gobackward()">Down</button>
-<button class="LeftButton" type="button" ="Up" onclick="turnleft()">Left</button>
-<button class="RightButton" type="button" ="Up" onclick="turnright()">Right</button>
-</div>
-</form>
-<div class="PoseX" id="poseX"></div>
-<div class="PoseY" id="poseY"></div>
-<div class="PoseLinVel" id="poseLinVel"></div>
-<div class="PoseTheta" id="poseTheta"></div>
-<div class="feedbackText" id="feedback"></div>
-<div class="PoseAngVel" id="poseAngVel"></div>
-<div class="MouseClick" id="mouseClick">2D Map and Control Window</div>
-<div class="CamWritings" >RGB Camera</div>
-<div class="MapWritings" >360Laser Assisted Gmapping</div>
-<div class="mapCanvas" id="map"></div>
-<div class="camCanvas" id="mjpeg"></div>
-</body>
+        //This lines subscribe to moveBase/Status
+        var moveBaseStatusTopic = new ROSLIB.Topic({
+            ros : rbServer,
+            name : '/move_base/status',
+            messageType : 'actionlib_msgs/GoalStatusArray'
+        });
+        //This lines pull data from subscribed topic moveBase/Status
+        moveBaseStatusTopic.subscribe(function(message) {
+            var movebaseStatus = document.getElementById('movebaseStatus');
+            movebaseStatus.innerHTML  = "Status: " + message.status_list[0].text
+        });
+
+        // These lines create a topic object for publish twist message
+        var cmdVelTopic = new ROSLIB.Topic({
+            ros : rbServer,
+            name : '/cmd_vel',
+            messageType : 'geometry_msgs/Twist'
+        });
+
+        // These lines create a message to identify the twist message.Identifying the msg is required for publishing.
+        // It initalizes all properties to zero. They will be set to appropriate values before we publish this message.
+        var twist = new ROSLIB.Message({
+            linear : {
+                x : 0.0,
+                y : 0.0,
+                z : 0.0
+            },
+            angular : {
+                x : 0.0,
+                y : 0.0,
+                z : 0.0
+            }
+        });
+
+        //This functions are basic cmd_vel_control blocks
+        function sleep(delay) {
+            var start = new Date().getTime();
+            while (new Date().getTime() < start + delay);
+        }
+
+        function moveSomeWhere(linVel, angVel) {
+            twist.linear.x = linVel;
+            twist.angular.z = angVel;
+            
+            cmdVelTopic.publish(twist);
+        }
+
+        function goforward() {
+            moveSomeWhere(0.5, 0)
+            sleep(100)
+            moveSomeWhere(0, 0)
+        }
+        function gobackward() {
+            moveSomeWhere(-0.5, 0)
+            sleep(100)
+            moveSomeWhere(0, 0)
+        }
+        function turnright() {
+            moveSomeWhere(0, -0.5)
+            sleep(100)
+            moveSomeWhere(0, 0)
+        }
+        function turnleft() {
+            moveSomeWhere(0, 0.5)
+            sleep(100)
+            moveSomeWhere(0, 0)
+        }
+        </script>
+        <!Main script end>
+    </head>
+    <!HEAD END>
+    <!BODY START>
+    <body onload="cam_init(); nav_and_map_init();">
+        <div class="OpenMessage">
+            <b>Ankara University TurtleBot Version 2.1 Command Control Center</b>
+        </div>
+        <div class="AnkUniLogo">
+            <img src="img/AnkUniLogo.png" alt="logo" />
+        </div>
+        <div class="YazgitLogo">
+            <img src="img/YazgitLogo.png" alt="logo" />
+        </div>
+        <div class="ROSLogo">
+            <img src="img/ROSLogo.png" alt="logo" />
+        </div>
+        <form id="c2356" >
+            <div class="MoveButtonsForm">
+                <button class="UpButton" type="button" ="Up" onclick="goforward()">Up</button>
+                <button class="DownButton" type="button" ="Up" onclick="gobackward()">Down</button>
+                <button class="LeftButton" type="button" ="Up" onclick="turnleft()">Left</button>
+                <button class="RightButton" type="button" ="Up" onclick="turnright()">Right</button>
+            </div>
+        </form>
+        <div class="PoseX" id="poseX"></div>
+        <div class="PoseY" id="poseY"></div>
+        <div class="PoseLinVel" id="poseLinVel"></div>
+        <div class="PoseTheta" id="poseTheta"></div>
+        <div class="PoseAngVel" id="poseAngVel"></div>
+        <div class="feedbackText" id="feedback"></div>
+        <div class="MoveBaseStatusText" id="movebaseStatus">Status:</div>
+        <div class="Nav2dmapText">2D Map and Control Window</div>
+        <div class="CamText" >RGB Camera</div>
+        <div class="nav2dmapCanvas" id="nav2dmap"></div>
+        <div class="camCanvas" id="mjpeg"></div>
+        <form id="c1111" >
+            <div class="MapButtonsForm">
+                <button class="MapZoomButton" type="button" ="Up" onclick="MapZoomFunc()">+</button>
+                <button class="MapPanButton" type="button" ="Up" onclick="MapPanFunc()">-</button>
+                <button class="CancelGoalButton" type="button" ="Up" onclick="cancelGoalFunc()">Cancel</button>
+            </div>
+        </form>
+    </body>
 <html>
