@@ -1,7 +1,9 @@
-#Turtle Bot Web Control 
+ROS Web Control for Turtlebot3 
 ======================
 
-#### Installation
+You can use this code with every other ROS robot.You only need to change topic namespaces in index.html file. 
+
+## Installation
 Firstly you must install turtlebot3, rosbridge server and web video server.
 ```bash
 sudo apt-get install "ros-kinetic-turtlebot3*"
@@ -13,7 +15,7 @@ then clone this repo
 git clone https://github.com/bhctsntrk/TurtleBotWebControl
 ```
 
-#### Usage with turtlebot3 simulation
+## Usage with turtlebot3 simulation
 
 ```bash
 export TURTLEBOT3_MODEL=waffle
@@ -24,7 +26,7 @@ roslaunch turtlebot3_slam turtlebot3_slam.launch
 rosrun web_video_server web_video_server
 rosrun robot_pose_publisher robot_pose_publisher
 ```
-then start index.html with your browser and start to use
+then open index.html with your browser and control your robot
 I use a lot of javascript code from robot web tools
 http://robotwebtools.org/tools.html
 
